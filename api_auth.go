@@ -1,0 +1,43 @@
+package qvapay
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+)
+
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (l *LoginRequest) ToByte() []byte {
+	bytes, _ := json.Marshal(&l)
+	return bytes
+}
+
+type APIResult map[string]any
+
+func (c *apiClient) Login(ctx context.Context, payload LoginRequest) (APIResult, error) {
+
+	url := fmt.Sprintf("%s/%s", c.server, login)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(payload.ToByte()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %v", err)
+	}
+
+	res, err := c.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute HTTP request: %v", err)
+	}
+	defer res.Body.Close()
+
+	result := make(APIResult)
+	if err = json.NewDecoder(res.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to create HTTP response: %v", err)
+	}
+	return result, nil
+}
