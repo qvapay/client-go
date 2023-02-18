@@ -5,3 +5,5 @@ package qvapay
 const (
 	login = "auth/login"
 )
+
+type APIResult map[string]any

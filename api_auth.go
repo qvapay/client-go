@@ -22,8 +22,6 @@ func (p *LoginRequest) ToReader() *strings.Reader {
 	return strings.NewReader(string(byte))
 }
 
-type APIResult map[string]any
-
 func (c *apiClient) Login(ctx context.Context, payload LoginRequest) (APIResult, error) {
 
 	url := fmt.Sprintf("%s/%s", c.server, login)
@@ -44,7 +42,7 @@ func (c *apiClient) Login(ctx context.Context, payload LoginRequest) (APIResult,
 		c.dumpResponse(res)
 	}
 
-	result := make(APIResult)
+	var result APIResult
 	if err = json.NewDecoder(res.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("failed to create HTTP response: %v", err)
 	}
