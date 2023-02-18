@@ -36,12 +36,15 @@ func (c *apiClient) Login(ctx context.Context, payload LoginRequest) (APIResult,
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request: %v", err)
 	}
-
+	apiCallDebugger(req, c.debug)
 	res, err := c.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute HTTP request: %v", err)
 	}
-	defer res.Body.Close()
+	defer DrainBody(res.Body)
+	if c.debug != nil {
+		c.dumpResponse(res)
+	}
 
 	result := make(APIResult)
 	if err = json.NewDecoder(res.Body).Decode(&result); err != nil {
