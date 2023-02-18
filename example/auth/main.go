@@ -13,7 +13,7 @@ func main() {
 	ctx := context.Background()
 	apiClient := qvapay.NewAPIClient(qvapay.APIClientOptions{
 		HttpClient: http.DefaultClient,
-		Debug:      nil,
+		Debug:      os.Stdout,
 		Server:     "https://qvapay.com/api",
 	})
 
