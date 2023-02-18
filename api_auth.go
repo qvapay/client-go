@@ -1,11 +1,12 @@
 package qvapay
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"strings"
 )
 
 type LoginRequest struct {
@@ -17,6 +18,13 @@ func (l *LoginRequest) ToByte() []byte {
 	bytes, _ := json.Marshal(&l)
 	return bytes
 }
+func (p *LoginRequest) ToReader() *strings.Reader {
+	byte, err := json.Marshal(p)
+	if err != nil {
+		log.Println(err)
+	}
+	return strings.NewReader(string(byte))
+}
 
 type APIResult map[string]any
 
@@ -24,7 +32,7 @@ func (c *apiClient) Login(ctx context.Context, payload LoginRequest) (APIResult,
 
 	url := fmt.Sprintf("%s/%s", c.server, login)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(payload.ToByte()))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, payload.ToReader())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request: %v", err)
 	}
