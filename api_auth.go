@@ -14,10 +14,6 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-func (l *LoginRequest) ToByte() []byte {
-	bytes, _ := json.Marshal(&l)
-	return bytes
-}
 func (p *LoginRequest) ToReader() *strings.Reader {
 	byte, err := json.Marshal(p)
 	if err != nil {
@@ -37,6 +33,8 @@ func (c *apiClient) Login(ctx context.Context, payload LoginRequest) (APIResult,
 		return nil, fmt.Errorf("failed to create HTTP request: %v", err)
 	}
 	apiCallDebugger(req, c.debug)
+
+	req.WithContext(ctx)
 	res, err := c.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute HTTP request: %v", err)
