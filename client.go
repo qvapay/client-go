@@ -16,7 +16,7 @@ type apiClient struct {
 	server string
 	client *http.Client
 	//optional for debuging
-	debug io.Writer
+	debug bool
 }
 
 // HttpRequestDoer defines methods for a http client.
@@ -30,7 +30,7 @@ type APIClientOptions struct {
 	//optional, defaults to http.DefaultClient
 	HttpClient *http.Client
 	//optional for debuging
-	Debug io.Writer
+	Debug bool
 	// Server url to use
 	Server string
 }
@@ -50,12 +50,12 @@ func NewAPIClient(options APIClientOptions) APIClient {
 	// Logging consideration
 	c.client.Transport = &headersRoundTripper{
 		next: &loggingRoundTripper{
-			next:   http.DefaultTransport,
-			logger: os.Stdout,
+			next:    http.DefaultTransport,
+			logger:  os.Stdout,
+			enabled: options.Debug,
 		},
 	}
 
-	c.debug = options.Debug
 	return c
 
 }
@@ -77,30 +77,35 @@ func (t authRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 }
 
 type loggingRoundTripper struct {
-	next   http.RoundTripper
-	logger io.Writer
+	next    http.RoundTripper
+	logger  io.Writer
+	enabled bool
 }
 
 func (l *loggingRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 	// Here we can set a fancy Logging implementation
 	// Request Dump
-	dump, err := httputil.DumpRequestOut(r, true)
-	if err != nil {
-		fmt.Printf("error dumping HTTP request: %s", err.Error())
-		return l.next.RoundTrip(r)
-	}
-	log.Println("Request:", string(dump))
+	if l.enabled {
+		dump, err := httputil.DumpRequestOut(r, true)
+		if err != nil {
+			fmt.Printf("error dumping HTTP request: %s", err.Error())
+			return l.next.RoundTrip(r)
+		}
+		log.Println("Request:", string(dump))
 
-	// Response Dump
-	resp, err := l.next.RoundTrip(r)
-	dump, _ = httputil.DumpResponse(resp, true)
-	if err != nil {
-		fmt.Printf("error dumping HTTP reponse: %s", err.Error())
-		return l.next.RoundTrip(r)
-	}
-	log.Println("Response:", string(dump))
+		// Response Dump
+		resp, err := l.next.RoundTrip(r)
+		dump, _ = httputil.DumpResponse(resp, true)
+		if err != nil {
+			fmt.Printf("error dumping HTTP reponse: %s", err.Error())
+			return l.next.RoundTrip(r)
+		}
+		log.Println("Response:", string(dump))
 
-	return resp, nil
+		return resp, nil
+	}
+
+	return l.next.RoundTrip(r)
 }
 
 type headersRoundTripper struct {
