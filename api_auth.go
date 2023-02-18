@@ -30,17 +30,17 @@ func (c *apiClient) Login(ctx context.Context, payload LoginRequest) (APIResult,
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request: %v", err)
 	}
-	apiCallDebugger(req, c.debug)
+	// apiCallDebugger(req, c.debug)
 
-	req.WithContext(ctx)
+	req = req.WithContext(ctx) // TODO: check if this is necessary, req =
 	res, err := c.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute HTTP request: %v", err)
 	}
 	defer DrainBody(res.Body)
-	if c.debug != nil {
-		c.dumpResponse(res)
-	}
+	// if c.debug != nil {
+	// 	c.dumpResponse(res)
+	// }
 
 	var result APIResult
 	if err = json.NewDecoder(res.Body).Decode(&result); err != nil {
