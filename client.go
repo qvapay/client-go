@@ -2,8 +2,12 @@ package qvapay
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"io/ioutil"
+	"log"
 	"net/http"
+	"net/http/httputil"
 	"os"
 )
 
@@ -49,4 +53,60 @@ func NewAPIClient(options APIClientOptions) APIClient {
 // APIClient defines methods implemented by the api client.
 type APIClient interface {
 	Login(ctx context.Context, payload LoginRequest) (APIResult, error)
+}
+
+type TransPortAuthBasic struct {
+	Transport http.RoundTripper
+	Token     string
+}
+
+func (t TransPortAuthBasic) RoundTrip(r *http.Request) (*http.Response, error) {
+	r.Header.Set("Authorization", "Bearer "+t.Token)
+	return t.Transport.RoundTrip(r)
+}
+
+// dumpResponse writes the raw response data to the debug output, if set, or
+// standard error otherwise.
+func (c *apiClient) dumpResponse(resp *http.Response) {
+	// ignore errors dumping response - no recovery from this
+	responseDump, err := httputil.DumpResponse(resp, true)
+	if err != nil {
+		log.Fatalf("dumpResponse: " + err.Error())
+	}
+	fmt.Fprintln(c.debug, string(responseDump))
+	fmt.Fprintln(c.debug)
+}
+
+func apiCallDebugger(req *http.Request, debug io.Writer) error {
+	req.Header.Add("content-type", "application/json")
+	req.Header.Add("User-Agent", "qvapay-go")
+	if debug != nil {
+		requestDump, err := httputil.DumpRequestOut(req, true)
+		if err != nil {
+			return fmt.Errorf("error dumping HTTP request: %v", err)
+		}
+		fmt.Fprintln(debug, string(requestDump))
+		fmt.Fprintln(debug)
+	}
+	return nil
+}
+
+func DrainBody(respBody io.ReadCloser) {
+	// Callers should close resp.Body when done reading from it.
+	// If resp.Body is not closed, the Client's underlying RoundTripper
+	// (typically Transport) may not be able to re-use a persistent TCP
+	// connection to the server for a subsequent "keep-alive" request.
+	if respBody != nil {
+		// Drain any remaining Body and then close the connection.
+		// Without this closing connection would disallow re-using
+		// the same connection for future uses.
+		//  - http://stackoverflow.com/a/17961593/4465767
+		defer func(respBody io.ReadCloser) {
+			err := respBody.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
+		}(respBody)
+		_, _ = io.Copy(ioutil.Discard, respBody)
+	}
 }
