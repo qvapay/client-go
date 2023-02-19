@@ -48,11 +48,13 @@ func NewAPIClient(options APIClientOptions) APIClient {
 	c.client = options.HttpClient
 
 	// Logging consideration
-	c.client.Transport = &headersRoundTripper{
-		next: &debugRoundTripper{
-			next:   http.DefaultTransport,
-			logger: os.Stdout,
-			Debug:  options.Debug,
+	c.client.Transport = &authRoundTripper{
+		next: &headersRoundTripper{
+			next: &debugRoundTripper{
+				next:   http.DefaultTransport,
+				logger: os.Stdout,
+				Debug:  options.Debug,
+			},
 		},
 	}
 
@@ -62,18 +64,35 @@ func NewAPIClient(options APIClientOptions) APIClient {
 
 // APIClient defines methods implemented by the api client.
 type APIClient interface {
-	Login(ctx context.Context, payload LoginRequest) (APIResult, error)
+	Login(ctx context.Context, payload LoginRequest) (*LoginResponse, error)
+	Register(ctx context.Context, payload RegisterRequest) (RegisterResponse, error)
+	Logout(ctx context.Context) (LogoutResponse, error)
 }
 
 // RoundTrippers Section
 type authRoundTripper struct {
-	next  http.RoundTripper
-	Token string
+	next http.RoundTripper
 }
 
 func (t authRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
-	r.Header.Set("Authorization", "Bearer "+t.Token)
-	return t.next.RoundTrip(r)
+	switch r.URL.Path {
+	case "/api/auth/login", "/api/auth/register":
+		return t.next.RoundTrip(r)
+
+	default:
+		if authUser == nil {
+			return &http.Response{}, fmt.Errorf("error in request, you are not successfully logged in")
+		}
+
+		if authUser.AccessToken != "" {
+			r.Header.Set("Authorization", "Bearer "+authUser.AccessToken)
+			return t.next.RoundTrip(r)
+
+		} else {
+			return &http.Response{}, fmt.Errorf("error in request, you are not successfully logged in")
+		}
+	}
+
 }
 
 type debugRoundTripper struct {

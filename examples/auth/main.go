@@ -17,14 +17,21 @@ func main() {
 		Server:     "https://qvapay.com/api",
 	})
 
-	result, err := apiClient.Login(ctx, qvapay.LoginRequest{
+	resultLogin, err := apiClient.Login(ctx, qvapay.LoginRequest{
 		Email:    os.Getenv("QVAPAY_USER"),
 		Password: os.Getenv("QVAPAY_PASSWORD"),
 	})
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("Result Before Logout:", resultLogin)
+
+	resultLogout, err := apiClient.Logout(ctx)
 
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	fmt.Println("Result:", result)
+	fmt.Println("Result:", resultLogout)
+	fmt.Println("Result After Logout:", resultLogin)
 }
