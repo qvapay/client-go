@@ -11,8 +11,10 @@ import (
 )
 
 func TestLoginOK(t *testing.T) {
-	want := "QvaPayUser"
-	data := `
+
+	t.Run("happy path - test http server ", func(t *testing.T) {
+		want := "QvaPayUser"
+		data := `
 	{
 		"accessToken":"387003",
 		"token_type":"Bearer",
@@ -25,21 +27,22 @@ func TestLoginOK(t *testing.T) {
 	}
 	`
 
-	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, data)
-	}))
+		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprintf(w, data)
+		}))
 
-	defer svr.Close()
-	api := NewAPIClient(APIClientOptions{
-		Server: svr.URL,
-	})
+		defer svr.Close()
+		api := NewAPIClient(APIClientOptions{
+			Server: svr.URL,
+		})
 
-	login, err := api.Login(context.TODO(), LoginRequest{
-		Email:    "user@gmail.com",
-		Password: "CffdKB73iTtzNJN!",
+		login, err := api.Login(context.TODO(), LoginRequest{
+			Email:    "user@gmail.com",
+			Password: "CffdKB73iTtzNJN!",
+		})
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+		assert.Equal(t, want, login.Me.Name)
 	})
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-	assert.Equal(t, want, login.Me.Name)
 }
