@@ -82,10 +82,9 @@ func (t authRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 	switch r.URL.Path {
 	case "/api/auth/login", "/api/auth/register":
 		return t.next.RoundTrip(r)
-
 	default:
 		if authUser == nil {
-			return &http.Response{}, fmt.Errorf("error in request, you are not successfully logged in")
+			return t.next.RoundTrip(r)
 		}
 
 		if authUser.AccessToken != "" {
@@ -93,7 +92,7 @@ func (t authRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 			return t.next.RoundTrip(r)
 
 		} else {
-			return &http.Response{}, fmt.Errorf("error in request, you are not successfully logged in")
+			return t.next.RoundTrip(r)
 		}
 	}
 

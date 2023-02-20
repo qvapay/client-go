@@ -15,7 +15,7 @@ func main() {
 	apiClient := qvapay.NewAPIClient(qvapay.APIClientOptions{
 		HttpClient: http.DefaultClient,
 		Debug:      os.Stdout,
-		Server:     "https://qvapay.com/api",
+		Server:     "https://qvapay.com",
 	})
 
 	resultLogin, err := apiClient.Login(ctx, qvapay.LoginRequest{

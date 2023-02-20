@@ -5,9 +5,9 @@ import "fmt"
 // URL_BASE = https://qvapay.com/api
 
 const (
-	loginEndpoint    = "auth/login"
-	registerEndpoint = "auth/register"
-	logoutEndpoint   = "auth/logout"
+	loginEndpoint    = "api/auth/login"
+	registerEndpoint = "api/auth/register"
+	logoutEndpoint   = "api/auth/logout"
 )
 
 // Customs Errors
