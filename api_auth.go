@@ -38,24 +38,48 @@ func (p *RegisterRequest) ToReader() *strings.Reader {
 	return strings.NewReader(string(byte))
 }
 
+var authUser *LoginResponse // Used as authentication state
+
+type LoginResponse struct {
+	AccessToken string `json:"accessToken"`
+	TokenType   string `json:"token_type"`
+	Me          User   `json:"me"`
+}
+
+func (l *LoginResponse) Clean() {
+	l.AccessToken = ""
+	l.TokenType = ""
+	l.Me = User{}
+}
+
+type RegisterResponse struct {
+	AccessToken string `json:"accessToken"`
+	TokenType   string `json:"token_type"`
+	Me          User   `json:"me"`
+}
+
+type LogoutResponse struct {
+	Message string `json:"message"`
+}
+
 func (c *apiClient) Login(ctx context.Context, payload LoginRequest) (*LoginResponse, error) {
 
 	url := fmt.Sprintf("%s/%s", c.server, loginEndpoint)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, payload.ToReader())
 	if err != nil {
-		return authUser, fmt.Errorf("failed to create HTTP request  for Login: %v", err)
+		return authUser, ErrCreateReq
 	}
 
 	req = req.WithContext(ctx)
 	res, err := c.client.Do(req)
 	if err != nil {
-		return authUser, fmt.Errorf("failed to execute HTTP request  for Login: %v", err)
+		return authUser, ErrExecuteReq
 	}
 	defer DrainBody(res.Body)
 
 	if err = json.NewDecoder(res.Body).Decode(&authUser); err != nil {
-		return nil, fmt.Errorf("failed to create HTTP response  for Login: %v", err)
+		return nil, ErrCreateRes
 	}
 
 	return authUser, nil
@@ -67,19 +91,19 @@ func (c *apiClient) Register(ctx context.Context, payload RegisterRequest) (Regi
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, payload.ToReader())
 	if err != nil {
-		return RegisterResponse{}, fmt.Errorf("failed to create HTTP request for Register: %v", err)
+		return RegisterResponse{}, ErrCreateReq
 	}
 
 	req = req.WithContext(ctx)
 	res, err := c.client.Do(req)
 	if err != nil {
-		return RegisterResponse{}, fmt.Errorf("failed to execute HTTP request for Register: %v", err)
+		return RegisterResponse{}, ErrExecuteReq
 	}
 	defer DrainBody(res.Body)
 
 	var registeredUser RegisterResponse
 	if err = json.NewDecoder(res.Body).Decode(&registeredUser); err != nil {
-		return RegisterResponse{}, fmt.Errorf("failed to create HTTP response for Register: %v", err)
+		return RegisterResponse{}, ErrCreateRes
 	}
 
 	return registeredUser, nil
@@ -91,19 +115,19 @@ func (c *apiClient) Logout(ctx context.Context) (LogoutResponse, error) {
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return LogoutResponse{}, fmt.Errorf("failed to create HTTP request for Logout: %v", err)
+		return LogoutResponse{}, ErrCreateReq
 	}
 
 	req = req.WithContext(ctx)
 	res, err := c.client.Do(req)
 	if err != nil {
-		return LogoutResponse{}, fmt.Errorf("failed to execute HTTP request for Logout: %v", err)
+		return LogoutResponse{}, ErrExecuteReq
 	}
 	defer DrainBody(res.Body)
 
 	var logoutResp LogoutResponse
 	if err = json.NewDecoder(res.Body).Decode(&logoutResp); err != nil {
-		return LogoutResponse{}, fmt.Errorf("failed to create HTTP response for Logout: %v", err)
+		return LogoutResponse{}, ErrCreateRes
 	}
 
 	if res.StatusCode == http.StatusCreated {
