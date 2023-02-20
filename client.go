@@ -45,7 +45,11 @@ func NewAPIClient(options APIClientOptions) APIClient {
 	}
 
 	c.server = options.Server
-	c.client = options.HttpClient
+	if options.HttpClient != nil {
+		c.client = options.HttpClient
+	} else {
+		c.client = http.DefaultClient
+	}
 
 	// Logging consideration
 	c.client.Transport = &authRoundTripper{
