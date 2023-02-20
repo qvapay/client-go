@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -21,7 +22,13 @@ func main() {
 		Email:    os.Getenv("QVAPAY_USER"),
 		Password: os.Getenv("QVAPAY_PASSWORD"),
 	})
+
+	// defaults errors
 	if err != nil {
+		//E.g: How you can use custom errors
+		if errors.Is(err, qvapay.ErrExecuteReq) {
+			fmt.Println(err)
+		}
 		fmt.Println(err)
 	}
 	fmt.Println("Result Before Logout:", resultLogin)
