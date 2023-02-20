@@ -1,5 +1,7 @@
 package qvapay
 
+import "fmt"
+
 // URL_BASE = https://qvapay.com/api
 
 const (
@@ -8,30 +10,15 @@ const (
 	logoutEndpoint   = "auth/logout"
 )
 
-var authUser *LoginResponse // Used as authentication state
+// Customs Errors
 
-type LoginResponse struct {
-	AccessToken string `json:"accessToken"`
-	TokenType   string `json:"token_type"`
-	Me          User   `json:"me"`
-}
+var (
+	ErrCreateReq  = fmt.Errorf("failed to create HTTP request")
+	ErrExecuteReq = fmt.Errorf("failed to execute HTTP request")
+	ErrCreateRes  = fmt.Errorf("failed to create HTTP response")
+)
 
-func (l *LoginResponse) Clean() {
-	l.AccessToken = ""
-	l.TokenType = ""
-	l.Me = User{}
-}
-
-type RegisterResponse struct {
-	AccessToken string `json:"accessToken"`
-	TokenType   string `json:"token_type"`
-	Me          User   `json:"me"`
-}
-
-type LogoutResponse struct {
-	Message string `json:"message"`
-}
-
+// TODO: move to api_user.go
 type User struct {
 	UUID             string `json:"uuid"`
 	Username         string `json:"username"`
