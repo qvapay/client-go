@@ -64,6 +64,10 @@ type LogoutResponse struct {
 
 func (c *apiClient) Login(ctx context.Context, payload LoginRequest) (*LoginResponse, error) {
 
+	if payload.Email == "" || payload.Password == "" {
+		return nil, ErrCreateReq
+	}
+
 	url := fmt.Sprintf("%s/%s", c.server, loginEndpoint)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, payload.ToReader())
