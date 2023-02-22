@@ -13,9 +13,10 @@ const (
 // Customs Errors
 
 var (
-	ErrCreateReq  = fmt.Errorf("failed to create HTTP request")
-	ErrExecuteReq = fmt.Errorf("failed to execute HTTP request")
-	ErrCreateRes  = fmt.Errorf("failed to create HTTP response")
+	ErrCreateReq       = fmt.Errorf("failed to create HTTP request")
+	ErrExecuteReq      = fmt.Errorf("failed to execute HTTP request")
+	ErrCreateRes       = fmt.Errorf("failed to create HTTP response")
+	ErrUnsuccessfulRes = fmt.Errorf("failed retrieving a successful HTTP response due to a possible non well formed request Body")
 )
 
 // TODO: move to api_user.go
