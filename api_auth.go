@@ -82,6 +82,10 @@ func (c *apiClient) Login(ctx context.Context, payload LoginRequest) (*LoginResp
 	}
 	defer DrainBody(res.Body)
 
+	if res.StatusCode != http.StatusOK {
+		return authUser, ErrUnsuccessfulRes
+	}
+
 	if err = json.NewDecoder(res.Body).Decode(&authUser); err != nil {
 		return nil, ErrCreateRes
 	}
@@ -115,6 +119,11 @@ func (c *apiClient) Register(ctx context.Context, payload RegisterRequest) (Regi
 
 func (c *apiClient) Logout(ctx context.Context) (LogoutResponse, error) {
 
+	// Check that user must be logged in before logout
+	if authUser.AccessToken == "" {
+		return LogoutResponse{}, ErrCreateReq
+	}
+
 	url := fmt.Sprintf("%s/%s", c.server, logoutEndpoint)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -134,9 +143,11 @@ func (c *apiClient) Logout(ctx context.Context) (LogoutResponse, error) {
 		return LogoutResponse{}, ErrCreateRes
 	}
 
-	if res.StatusCode == http.StatusCreated {
-		authUser.Clean()
+	if res.StatusCode != http.StatusCreated {
+		return logoutResp, ErrUnsuccessfulRes
 	}
+
+	authUser.Clean()
 
 	return logoutResp, nil
 }
