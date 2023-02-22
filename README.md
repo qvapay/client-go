@@ -40,4 +40,22 @@ func main() {
 
 ```
 
+## Tests
+
+To run tests and check the coverage report, run the following commands:
+
+``` sh
+# Running simple tests
+go test ./... -v
+
+# Simple test coverage percentage
+go test -cover
+
+# Build test coverage profile
+go test -coverprofile=cover.out
+
+# Analyze coverage profile report in HTML
+go tool cover -html=cover.out -o cover.html
+```
+
 For more examples take a look in `examples` directory.
