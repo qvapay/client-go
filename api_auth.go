@@ -120,6 +120,10 @@ func (c *apiClient) Register(ctx context.Context, payload RegisterRequest) (Regi
 func (c *apiClient) Logout(ctx context.Context) (LogoutResponse, error) {
 
 	// Check that user must be logged in before logout
+	if authUser == nil {
+		return LogoutResponse{}, ErrCreateReq
+	}
+
 	if authUser.AccessToken == "" {
 		return LogoutResponse{}, ErrCreateReq
 	}
