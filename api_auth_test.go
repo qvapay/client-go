@@ -147,7 +147,7 @@ func TestLogout(t *testing.T) {
 		"message":"successfully logout"
 	}
 	`
-		authUser.AccessToken = ""
+		authUser = nil
 
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusCreated)
@@ -173,7 +173,9 @@ func TestLogout(t *testing.T) {
 		"message":"successfully logout"
 	}
 	`
-		authUser.AccessToken = "1q2w3e4r5t"
+		authUser = &LoginResponse{
+			AccessToken: "1q2w3e4r5t",
+		}
 
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusCreated)
@@ -201,7 +203,9 @@ func TestLogout(t *testing.T) {
 		"message":"successfully logout"
 	}
 	`
-		authUser.AccessToken = "1q2w3e4r5t"
+		authUser = &LoginResponse{
+			AccessToken: "1q2w3e4r5t",
+		}
 
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusCreated)
