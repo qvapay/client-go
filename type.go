@@ -8,6 +8,7 @@ const (
 	loginEndpoint    = "api/auth/login"
 	registerEndpoint = "api/auth/register"
 	logoutEndpoint   = "api/auth/logout"
+	meEndpoint       = "api/user"
 )
 
 // Customs Errors
