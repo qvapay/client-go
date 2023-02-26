@@ -66,13 +66,6 @@ func NewAPIClient(options APIClientOptions) APIClient {
 
 }
 
-// APIClient defines methods implemented by the api client.
-type APIClient interface {
-	Login(ctx context.Context, payload LoginRequest) (*LoginResponse, error)
-	Register(ctx context.Context, payload RegisterRequest) (RegisterResponse, error)
-	Logout(ctx context.Context) (LogoutResponse, error)
-}
-
 // RoundTrippers Section
 type authRoundTripper struct {
 	next http.RoundTripper
@@ -161,4 +154,12 @@ func DrainBody(respBody io.ReadCloser) {
 		}(respBody)
 		_, _ = io.Copy(ioutil.Discard, respBody)
 	}
+}
+
+// APIClient defines methods implemented by the api client.
+type APIClient interface {
+	Login(ctx context.Context, payload LoginRequest) (*LoginResponse, error)
+	Register(ctx context.Context, payload RegisterRequest) (RegisterResponse, error)
+	Logout(ctx context.Context) (LogoutResponse, error)
+	GetMeRAW(ctx context.Context) (MeRAW, error)
 }
