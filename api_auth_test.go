@@ -10,10 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLogin(t *testing.T) {
-	t.Run("happy path - test http server successfully", func(t *testing.T) {
-		want := "QvaPayUser"
-		data := `
+func TestLoginErrors(t *testing.T) {
+	mockResp := `
 	{
 		"accessToken":"387003",
 		"token_type":"Bearer",
@@ -26,8 +24,26 @@ func TestLogin(t *testing.T) {
 	}
 	`
 
+	table := []struct {
+		Name       string
+		Request    LoginRequest
+		Response   string
+		StatusCode int
+		Want       error
+	}{
+		{Name: "Successful Login Request", StatusCode: http.StatusOK, Request: LoginRequest{Email: "mock@gmail.com", Password: "1q2w3e4r5t"}, Want: nil, Response: mockResp},
+		{Name: "Empty Login Request", StatusCode: http.StatusOK, Request: LoginRequest{Email: "", Password: ""}, Want: ErrCreateReq, Response: mockResp},
+		{Name: "Empty Password at Login", StatusCode: http.StatusOK, Request: LoginRequest{Email: "some@gm.com", Password: ""}, Want: ErrCreateReq, Response: mockResp},
+		{Name: "Empty Email at Login Request", StatusCode: http.StatusOK, Request: LoginRequest{Email: "", Password: "1q2w3e4r5t"}, Want: ErrCreateReq, Response: mockResp},
+		{Name: "Unmarshable Response", StatusCode: http.StatusOK, Request: LoginRequest{Email: "some@hm.com", Password: "1q2w3e4r5t"}, Want: ErrCreateRes, Response: "{" + mockResp},
+		{Name: "Unmarshable Response", StatusCode: http.StatusUnprocessableEntity, Request: LoginRequest{Email: "some@hm.com", Password: "1q2w3e4r5t"}, Want: ErrUnsuccessfulRes, Response: mockResp},
+	}
+
+	for _, tt := range table {
+
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintf(w, data)
+			w.WriteHeader(tt.StatusCode)
+			fmt.Fprintf(w, tt.Response)
 		}))
 
 		defer svr.Close()
@@ -35,109 +51,52 @@ func TestLogin(t *testing.T) {
 			Server: svr.URL,
 		})
 
-		login, err := api.Login(context.TODO(), LoginRequest{
-			Email:    "user@gmail.com",
-			Password: "CffdKB73iTtzNJN!",
+		_, err := api.Login(context.TODO(), tt.Request)
+
+		assert.Equal(t, tt.Want, err)
+	}
+}
+
+func TestLoginResponse(t *testing.T) {
+	mockResp := `
+	{
+		"accessToken":"387003",
+		"token_type":"Bearer",
+		"me":{
+			"uuid":"sd-sd-s-sd-sd",
+			"username":"user@gmail.com",
+			"name":"QvaPayUser",
+			"lastname":"Paymenton"
+		}
+	}
+	`
+
+	table := []struct {
+		Name    string
+		Request LoginRequest
+		Want    string
+	}{
+		{Name: "Successful Login Response", Request: LoginRequest{Email: "mock@gmail.com", Password: "1q2w3e4r5t"}, Want: "QvaPayUser"},
+	}
+
+	for _, tt := range table {
+
+		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprintf(w, mockResp)
+		}))
+
+		defer svr.Close()
+		api := NewAPIClient(APIClientOptions{
+			Server: svr.URL,
 		})
+
+		login, err := api.Login(context.TODO(), tt.Request)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Errorf("Unexpected error: %v", err.Error())
 		}
-		assert.Equal(t, want, login.Me.Name)
-	})
 
-	t.Run("sad path - Empty Login payload values", func(t *testing.T) {
-		data := `
-	{
-		"accessToken":"387003",
-		"token_type":"Bearer",
-		"me":{
-			"uuid":"sd-sd-s-sd-sd",
-			"username":"user@gmail.com",
-			"name":"QvaPayUser",
-			"lastname":"Paymenton"
-		}
+		assert.Equal(t, tt.Want, login.Me.Name)
 	}
-	`
-
-		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintf(w, data)
-		}))
-
-		defer svr.Close()
-		api := NewAPIClient(APIClientOptions{
-			Server: svr.URL,
-		})
-
-		_, err := api.Login(context.TODO(), LoginRequest{
-			Email:    "",
-			Password: "",
-		})
-
-		assert.Equal(t, ErrCreateReq, err)
-	})
-
-	t.Run("sad path - Wrong Credentials values", func(t *testing.T) {
-		data := `
-	{
-		"accessToken":"387003",
-		"token_type":"Bearer",
-		"me":{
-			"uuid":"sd-sd-s-sd-sd",
-			"username":"user@gmail.com",
-			"name":"QvaPayUser",
-			"lastname":"Paymenton"
-		}
-	}
-	`
-
-		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			fmt.Fprintf(w, data)
-		}))
-
-		defer svr.Close()
-		api := NewAPIClient(APIClientOptions{
-			Server: svr.URL,
-		})
-
-		_, err := api.Login(context.TODO(), LoginRequest{
-			Email:    "bademail@gial.com",
-			Password: "1q2w3e4r5t",
-		})
-
-		assert.Equal(t, ErrUnsuccessfulRes, err)
-	})
-
-	t.Run("sad path - Unmarshable response Body", func(t *testing.T) {
-		data := `
-	{
-		{"accessToken":"387003",
-		"token_type":"Bearer",
-		"me":{
-			"uuid":"sd-sd-s-sd-sd",
-			"username":"user@gmail.com",
-			"name":"QvaPayUser",
-			"lastname":"Paymenton"
-		}
-	}
-	`
-
-		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintf(w, data)
-		}))
-
-		defer svr.Close()
-		api := NewAPIClient(APIClientOptions{
-			Server: svr.URL,
-		})
-
-		_, err := api.Login(context.TODO(), LoginRequest{
-			Email:    "user@gmail.com",
-			Password: "1q2w3e4r5t",
-		})
-
-		assert.Equal(t, ErrCreateRes, err)
-	})
 }
 
 func TestLogout(t *testing.T) {
