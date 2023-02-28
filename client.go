@@ -162,4 +162,5 @@ type APIClient interface {
 	Register(ctx context.Context, payload RegisterRequest) (RegisterResponse, error)
 	Logout(ctx context.Context) (LogoutResponse, error)
 	GetMeRAW(ctx context.Context) (MeRAW, error)
+	GetMe(ctx context.Context) (User, error)
 }

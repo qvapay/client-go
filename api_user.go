@@ -36,3 +36,31 @@ func (c *apiClient) GetMeRAW(ctx context.Context) (MeRAW, error) {
 
 	return result, nil
 }
+
+func (c *apiClient) GetMe(ctx context.Context) (User, error) {
+	url := fmt.Sprintf("%s/%s", c.server, meEndpoint)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return User{}, ErrCreateReq
+	}
+
+	req = req.WithContext(ctx)
+	res, err := c.client.Do(req)
+	if err != nil {
+		return User{}, ErrExecuteReq
+	}
+	defer DrainBody(res.Body)
+
+	if res.StatusCode != http.StatusOK {
+		return User{}, ErrUnsuccessfulRes
+	}
+
+	var result User
+
+	if err = json.NewDecoder(res.Body).Decode(&result); err != nil {
+		return User{}, ErrCreateRes
+	}
+
+	return result, nil
+}

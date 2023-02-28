@@ -33,4 +33,5 @@ type User struct {
 	NameVerified     string `json:"name_verified"`
 	ProfilePhotoURL  string `json:"profile_photo_url"`
 	AverageRating    string `json:"average_rating"`
+	KYC              string `json:"kyc"`
 }
