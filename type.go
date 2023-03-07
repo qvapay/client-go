@@ -35,3 +35,9 @@ type User struct {
 	AverageRating    string `json:"average_rating"`
 	KYC              string `json:"kyc"`
 }
+
+type App struct {
+	Logo string
+	URL  string
+	Name string
+}

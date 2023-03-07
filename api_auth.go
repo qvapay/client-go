@@ -22,6 +22,16 @@ func (p *LoginRequest) ToReader() *strings.Reader {
 	return strings.NewReader(string(byte))
 }
 
+func (p *LoginRequest) Validate() error {
+
+	if p.Email == "" || p.Password == "" {
+		return fmt.Errorf("email and password must be provided")
+	}
+
+	return nil
+
+}
+
 type RegisterRequest struct {
 	Name            string `json:"name"`
 	Email           string `json:"email"`
@@ -64,7 +74,7 @@ type LogoutResponse struct {
 
 func (c *apiClient) Login(ctx context.Context, payload LoginRequest) (*LoginResponse, error) {
 
-	if payload.Email == "" || payload.Password == "" {
+	if err := payload.Validate(); err != nil {
 		return nil, ErrCreateReq
 	}
 
